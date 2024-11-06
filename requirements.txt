@@ -1,0 +1,10 @@
+streamlit
+pandas
+openpyxl
+matplotlib
+streamlit-echarts
+plotly
+requests
+datetime
+python-dateutil
+pytz
