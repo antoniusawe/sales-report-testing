@@ -101,6 +101,51 @@ if location == "Bali":
         </div>
         """, unsafe_allow_html=True)
 
+        # Menggunakan st.button untuk fungsi interaktif
+        if 'show_data' not in st.session_state:
+            st.session_state['show_data'] = False
+
+        # Display Generate Data and Clear buttons
+        st.markdown(
+            """
+            <style>
+            .button-container {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 20px;
+            }
+            .button-style {
+                padding: 10px 20px;
+                font-size: 16px;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        st.markdown("<div class='button-container'>", unsafe_allow_html=True)
+        generate = st.button("Generate Data", key="generate_button")
+        clear = st.button("Clear", key="clear_button")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        if generate:
+            st.session_state['show_data'] = True
+        if clear:
+            st.session_state['show_data'] = False
+
+        # Kondisi untuk menampilkan data jika Generate Data ditekan
+        if st.session_state.get('show_data', False):
+            st.markdown("<h2 style='text-align: left; font-size: 16px;'>Bali Occupancy Data</h2>", unsafe_allow_html=True)
+            st.dataframe(bali_occupancy_data)
+
+            # Format kolom 'Batch start date' untuk konsistensi
+            filtered_data['Batch start date'] = filtered_data['Batch start date'].dt.strftime('%d %b %Y')
+            st.markdown("<h2 style='text-align: left; font-size: 16px;'>Bali Sales Data</h2>", unsafe_allow_html=True)
+            st.dataframe(filtered_data)
+
         # Bar chart data preparation
         site_fill_data = bali_occupancy_data.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
         room_fill_data = bali_occupancy_data.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
@@ -112,37 +157,13 @@ if location == "Bali":
         highest_value_month = month_counts['NAME'].max()
 
         # Configure and display bar charts
-        site_bar_chart_data = {
-            "title": {"text": "Top Frequent Sites", "left": "center"},
-            "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-            "xAxis": {"type": "category", "data": site_fill_data['Site'].tolist()},
-            "yAxis": {"type": "value"},
-            "series": [{"data": [{"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_site else "#5470C6"}} for fill in site_fill_data['Fill']], "type": "bar"}]
-        }
-
-        room_bar_chart_data = {
-            "title": {"text": "Top Frequent Rooms", "left": "center"},
-            "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-            "xAxis": {"type": "category", "data": room_fill_data['Room'].tolist()},
-            "yAxis": {"type": "value"},
-            "series": [{"data": [{"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_room else "#5470C6"}} for fill in room_fill_data['Fill']], "type": "bar"}]
-        }
-
-        month_bar_chart_data = {
-            "title": {"text": "Top Months", "left": "center"},
-            "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-            "xAxis": {"type": "category", "data": month_counts['Month'].tolist()},
-            "yAxis": {"type": "value"},
-            "series": [{"data": [{"value": count, "itemStyle": {"color": "#FF5733" if count == highest_value_month else "#5470C6"}} for count in month_counts['NAME']], "type": "bar"}]
-        }
-
         col1, col2, col3 = st.columns(3)
         with col1:
-            st_echarts(options=site_bar_chart_data, height="300px")
+            st_echarts(options={"title": {"text": "Top Frequent Sites"}, "series": [{"data": site_fill_data['Fill'].tolist(), "type": "bar"}]}, height="300px")
         with col2:
-            st_echarts(options=room_bar_chart_data, height="300px")
+            st_echarts(options={"title": {"text": "Top Frequent Rooms"}, "series": [{"data": room_fill_data['Fill'].tolist(), "type": "bar"}]}, height="300px")
         with col3:
-            st_echarts(options=month_bar_chart_data, height="300px")
+            st_echarts(options={"title": {"text": "Top Months"}, "series": [{"data": month_counts['NAME'].tolist(), "type": "bar"}]}, height="300px")
 
 elif location == "India":
     program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_india")
