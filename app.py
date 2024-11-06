@@ -86,7 +86,43 @@ if location == "Bali":
             data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
             st.write("Batch Data for 300HR Program")
             st.write(data_300hr_batches)
-    
+
+            # Menambahkan Radio Button untuk pilihan Year
+            unique_years = data_300hr_batches['Year'].dropna().unique()
+            unique_years = sorted(unique_years)  # Urutkan tahun untuk kemudahan pengguna
+            unique_years = ["All"] + list(unique_years)  # Tambahkan opsi "All" di awal
+
+            # Radio button untuk memilih tahun
+            selected_year = st.radio("Select a Year:", unique_years, key="year_selection_200hr")
+
+            # Filter data berdasarkan tahun yang dipilih, jika bukan "All"
+            if selected_year != "All":
+                year_data = data_300hr_batches[data_300hr_batches['Year'] == selected_year]
+                
+                # Menampilkan dropdown untuk memilih bulan berdasarkan tahun yang dipilih
+                unique_months = year_data['Batch start date'].dt.month.dropna().unique()
+                unique_months = sorted(unique_months)  # Urutkan bulan untuk kemudahan pengguna
+                month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
+
+                selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_200hr")
+            else:
+                selected_month = "All"
+
+            # Informasi untuk debugging, menampilkan data yang difilter
+            st.write("Filtered data based on selections:")
+            if selected_year != "All" and selected_month != "All":
+                # Filter data untuk tahun dan bulan spesifik
+                month_num = datetime.strptime(selected_month, '%B').month
+                filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
+            elif selected_year != "All":
+                # Hanya filter data berdasarkan tahun
+                filtered_data = year_data
+            else:
+                # Semua data tanpa filter
+                filtered_data = data_300hr_batches
+
+            st.dataframe(filtered_data)  # Menampilkan data yang difilter
+
 
     elif bali_option == "Location":
         st.write("Location details for Bali")
