@@ -105,6 +105,10 @@ if location == "Bali":
         site_fill_data = bali_occupancy_data.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
         room_fill_data = bali_occupancy_data.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
         month_counts = filtered_data[filtered_data['BALANCE'] == 0].groupby('Month')['NAME'].count().reset_index()
+        month_counts = month_counts.sort_values(by='NAME', ascending=False)  # Sort by count of students with BALANCE = 0
+        
+        # Bar chart configuration for Top Months with sorted data
+        highest_value_month = month_counts['NAME'].max()
 
         # Bar chart configurations
         highest_fill_value_site = site_fill_data['Fill'].max()
@@ -129,11 +133,49 @@ if location == "Bali":
         }
 
         month_bar_chart_data = {
-            "title": {"text": "Top Months", "left": "center"},
-            "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-            "xAxis": {"type": "category", "data": month_counts['Month'].tolist()},
-            "yAxis": {"type": "value"},
-            "series": [{"data": [{"value": count, "itemStyle": {"color": "#FF5733" if count == highest_value_month else "#5470C6"}} for count in month_counts['NAME']], "type": "bar"}]
+            "title": {
+                "text": "Top Months",
+                "left": "center",
+                "textStyle": {
+                    "fontSize": 16,
+                    "fontWeight": "bold",
+                    "color": "#333333"
+                }
+            },
+            "tooltip": {
+                "trigger": "item",
+                "formatter": "{b}: {c}"  # Show Month and count of students with Balance = 0
+            },
+            "xAxis": {
+                "type": "category",
+                "data": month_counts['Month'].tolist()  # Now sorted by count, not by chronological order
+            },
+            "yAxis": {
+                "type": "value",
+                "axisLabel": {
+                    "fontSize": 6,
+                    "margin": 10  # Adjust margin to provide more space for y-axis labels
+                }
+            },
+            "series": [{
+                "data": [
+                    {
+                        "value": count,
+                        "itemStyle": {
+                            "color": "#FF5733" if count == highest_value_month else "#5470C6"
+                        }
+                    }
+                    for count in month_counts['NAME']
+                ],
+                "type": "bar",
+                "label": {
+                    "show": True,
+                    "position": "top",
+                    "formatter": "{c}",
+                    "fontSize": 9,
+                    "color": "#333333"
+                }
+            }]
         }
 
         col1, col2, col3 = st.columns(3)
