@@ -222,7 +222,7 @@ if location == "Bali":
                 occupancy_data_filtered = occupancy_data_filtered[occupancy_data_filtered['Batch start date'].dt.month == month_num]
             else:
                 filtered_data = year_data
-                occupancy_data_filtered = bali_occupancy_data
+                occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Category'] == '300HR']  # Pastikan hanya data 300HR
 
             # Jika tidak ada data untuk 300HR, beri nilai 0 atau tampilkan pesan 'No Data'
             if filtered_data.empty:
@@ -264,7 +264,7 @@ if location == "Bali":
             """, unsafe_allow_html=True)
 
             # Update Top Frequent Sites and Rooms based on filtered occupancy_data_filtered
-            if not occupancy_data_filtered.empty:
+            if not occupancy_data_filtered.empty and not filtered_data.empty:
                 site_fill_data = occupancy_data_filtered.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
                 room_fill_data = occupancy_data_filtered.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
 
