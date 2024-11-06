@@ -121,17 +121,51 @@ if location == "Bali":
             "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
             "xAxis": {"type": "category", "data": site_fill_data['Site'].tolist()},
             "yAxis": {"type": "value"},
-            "series": [{"data": [{"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_site else "#5470C6"}} for fill in site_fill_data['Fill']], "type": "bar"}]
+            "series": [{
+                "data": [
+                    {
+                        "value": fill,
+                        "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_site else "#5470C6"}
+                    }
+                    for fill in site_fill_data['Fill']
+                ],
+                "type": "bar",
+                "label": {
+                    "show": True,
+                    "position": "top",
+                    "formatter": "{c}",  # Show value at the top of each bar
+                    "fontSize": 9,
+                    "color": "#333333"
+                }
+            }]
         }
 
+        # Configuration for Top Frequent Rooms chart with labels
         room_bar_chart_data = {
             "title": {"text": "Top Frequent Rooms", "left": "center"},
             "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
             "xAxis": {"type": "category", "data": room_fill_data['Room'].tolist()},
             "yAxis": {"type": "value"},
-            "series": [{"data": [{"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_room else "#5470C6"}} for fill in room_fill_data['Fill']], "type": "bar"}]
+            "series": [{
+                "data": [
+                    {
+                        "value": fill,
+                        "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_room else "#5470C6"}
+                    }
+                    for fill in room_fill_data['Fill']
+                ],
+                "type": "bar",
+                "label": {
+                    "show": True,
+                    "position": "top",
+                    "formatter": "{c}",  # Show value at the top of each bar
+                    "fontSize": 9,
+                    "color": "#333333"
+                }
+            }]
         }
 
+        # Configuration for Top Months chart with labels
         month_bar_chart_data = {
             "title": {
                 "text": "Top Months",
@@ -171,13 +205,14 @@ if location == "Bali":
                 "label": {
                     "show": True,
                     "position": "top",
-                    "formatter": "{c}",
+                    "formatter": "{c}",  # Show value at the top of each bar
                     "fontSize": 9,
                     "color": "#333333"
                 }
             }]
         }
 
+        # Display the charts in columns
         col1, col2, col3 = st.columns(3)
         with col1:
             st_echarts(options=site_bar_chart_data, height="300px")
@@ -185,6 +220,27 @@ if location == "Bali":
             st_echarts(options=room_bar_chart_data, height="300px")
         with col3:
             st_echarts(options=month_bar_chart_data, height="300px")
+
+    elif bali_option == "Location":
+        st.write("Location details for Bali")
+        if program == "200HR":
+            data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
+            st.write("Batch Data for 200HR Program")
+        elif program == "300HR":
+            data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
+            st.write("Batch Data for 300HR Program")
+            st.write(data_300hr_batches)
+    elif bali_option == "Batch":
+        # Batch details based on program selection
+        st.write(f"Batch details for {program} program")
+        if program == "200HR":
+            data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
+            st.write("Batch Data for 200HR Program")
+            st.write(data_200hr_batches)
+        elif program == "300HR":
+            data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
+            st.write("Batch Data for 300HR Program")
+            st.write(data_300hr_batches)
 
 elif location == "India":
     program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_india")
