@@ -224,12 +224,20 @@ if location == "Bali":
                 filtered_data = year_data
                 occupancy_data_filtered = bali_occupancy_data
 
-            # Calculate metrics
-            newest_batch_date = filtered_data['Batch start date'].max()
-            cut_off_date = newest_batch_date.strftime('%d %b %Y') if pd.notnull(newest_batch_date) else "No date available"
-            total_booking_ctr = filtered_data[filtered_data["BALANCE"] == 0]["NAME"].count()
-            total_paid_amount = filtered_data[filtered_data["BALANCE"] == 0]["PAID"].sum()
-            average_occupancy = occupancy_data_filtered['Occupancy'].mean()
+            # Jika tidak ada data untuk 300HR, beri nilai 0 atau tampilkan pesan 'No Data'
+            if filtered_data.empty:
+                cut_off_date = "No date available"
+                total_booking_ctr = 0
+                total_paid_amount = 0
+                average_occupancy = 0.0
+                st.write("No data available for 300HR program")
+            else:
+                # Calculate metrics jika data tidak kosong
+                newest_batch_date = filtered_data['Batch start date'].max()
+                cut_off_date = newest_batch_date.strftime('%d %b %Y') if pd.notnull(newest_batch_date) else "No date available"
+                total_booking_ctr = filtered_data[filtered_data["BALANCE"] == 0]["NAME"].count()
+                total_paid_amount = filtered_data[filtered_data["BALANCE"] == 0]["PAID"].sum()
+                average_occupancy = occupancy_data_filtered['Occupancy'].mean()
 
             # Display metrics
             st.markdown(f"""
@@ -256,63 +264,71 @@ if location == "Bali":
             """, unsafe_allow_html=True)
 
             # Update Top Frequent Sites and Rooms based on filtered occupancy_data_filtered
-            site_fill_data = occupancy_data_filtered.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
-            room_fill_data = occupancy_data_filtered.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
+            if not occupancy_data_filtered.empty:
+                site_fill_data = occupancy_data_filtered.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
+                room_fill_data = occupancy_data_filtered.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
 
-            # Chart configurations for Top Frequent Sites
-            highest_fill_value_site = site_fill_data['Fill'].max()
-            site_bar_chart_data = {
-                "title": {"text": "Top Frequent Sites", "left": "center"},
-                "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-                "xAxis": {"type": "category", "data": site_fill_data['Site'].tolist()},
-                "yAxis": {"type": "value"},
-                "series": [{
-                    "data": [
-                        {"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_site else "#5470C6"}}
-                        for fill in site_fill_data['Fill']
-                    ],
-                    "type": "bar",
-                    "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
-                }]
-            }
+                # Chart configurations for Top Frequent Sites
+                highest_fill_value_site = site_fill_data['Fill'].max()
+                site_bar_chart_data = {
+                    "title": {"text": "Top Frequent Sites", "left": "center"},
+                    "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
+                    "xAxis": {"type": "category", "data": site_fill_data['Site'].tolist()},
+                    "yAxis": {"type": "value"},
+                    "series": [{
+                        "data": [
+                            {"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_site else "#5470C6"}}
+                            for fill in site_fill_data['Fill']
+                        ],
+                        "type": "bar",
+                        "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
+                    }]
+                }
 
-            # Chart configurations for Top Frequent Rooms
-            highest_fill_value_room = room_fill_data['Fill'].max()
-            room_bar_chart_data = {
-                "title": {"text": "Top Frequent Rooms", "left": "center"},
-                "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-                "xAxis": {"type": "category", "data": room_fill_data['Room'].tolist()},
-                "yAxis": {"type": "value"},
-                "series": [{
-                    "data": [
-                        {"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_room else "#5470C6"}}
-                        for fill in room_fill_data['Fill']
-                    ],
-                    "type": "bar",
-                    "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
-                }]
-            }
+                # Chart configurations for Top Frequent Rooms
+                highest_fill_value_room = room_fill_data['Fill'].max()
+                room_bar_chart_data = {
+                    "title": {"text": "Top Frequent Rooms", "left": "center"},
+                    "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
+                    "xAxis": {"type": "category", "data": room_fill_data['Room'].tolist()},
+                    "yAxis": {"type": "value"},
+                    "series": [{
+                        "data": [
+                            {"value": fill, "itemStyle": {"color": "#FF5733" if fill == highest_fill_value_room else "#5470C6"}}
+                            for fill in room_fill_data['Fill']
+                        ],
+                        "type": "bar",
+                        "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
+                    }]
+                }
+            else:
+                # Jika occupancy_data_filtered kosong, tampilkan chart kosong
+                site_bar_chart_data = {"title": {"text": "No Data for Sites", "left": "center"}}
+                room_bar_chart_data = {"title": {"text": "No Data for Rooms", "left": "center"}}
 
             # Create and display Month bar chart based on fully paid data
             balance_zero_data = filtered_data[filtered_data['BALANCE'] == 0]
             month_counts = balance_zero_data.groupby('Month')['NAME'].count().reset_index()
             month_counts = month_counts.sort_values(by='NAME', ascending=False)
-            highest_value_month = month_counts['NAME'].max()
+            highest_value_month = month_counts['NAME'].max() if not month_counts.empty else 0
 
-            month_bar_chart_data = {
-                "title": {"text": "Top Months", "left": "center"},
-                "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
-                "xAxis": {"type": "category", "data": month_counts['Month'].tolist()},
-                "yAxis": {"type": "value"},
-                "series": [{
-                    "data": [
-                        {"value": count, "itemStyle": {"color": "#FF5733" if count == highest_value_month else "#5470C6"}}
-                        for count in month_counts['NAME']
-                    ],
-                    "type": "bar",
-                    "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
-                }]
-            }
+            if not month_counts.empty:
+                month_bar_chart_data = {
+                    "title": {"text": "Top Months", "left": "center"},
+                    "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
+                    "xAxis": {"type": "category", "data": month_counts['Month'].tolist()},
+                    "yAxis": {"type": "value"},
+                    "series": [{
+                        "data": [
+                            {"value": count, "itemStyle": {"color": "#FF5733" if count == highest_value_month else "#5470C6"}}
+                            for count in month_counts['NAME']
+                        ],
+                        "type": "bar",
+                        "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
+                    }]
+                }
+            else:
+                month_bar_chart_data = {"title": {"text": "No Data for Months", "left": "center"}}
 
             # Display charts side by side
             col1, col2, col3 = st.columns(3)
