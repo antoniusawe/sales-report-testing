@@ -46,6 +46,7 @@ if location == "Bali":
         if program == "200HR":
             data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
             st.write("Batch Data for 200HR Program")
+
             # Menambahkan Radio Button untuk pilihan Year
             unique_years = data_200hr_batches['Year'].dropna().unique()
             unique_years = sorted(unique_years)  # Urutkan tahun untuk kemudahan pengguna
@@ -93,7 +94,7 @@ if location == "Bali":
             unique_years = ["All"] + list(unique_years)  # Tambahkan opsi "All" di awal
 
             # Radio button untuk memilih tahun
-            selected_year = st.radio("Select a Year:", unique_years, key="year_selection_200hr")
+            selected_year = st.radio("Select a Year:", unique_years, key="year_selection_300hr")
 
             # Filter data berdasarkan tahun yang dipilih, jika bukan "All"
             if selected_year != "All":
@@ -122,6 +123,7 @@ if location == "Bali":
                 filtered_data = data_300hr_batches
 
             st.dataframe(filtered_data)  # Menampilkan data yang difilter
+
 
 
     elif bali_option == "Location":
