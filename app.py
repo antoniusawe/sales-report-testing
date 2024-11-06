@@ -343,13 +343,80 @@ if location == "Bali":
 
     elif bali_option == "Location":
         st.write("Location details for Bali")
+        
         if program == "200HR":
+            # Filter data untuk kategori 200HR
             data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
-            st.write("Batch Data for 200HR Program")
+            
+            # Radio button untuk memilih tahun (Year) pada program 200HR
+            unique_years = data_200hr_batches['Year'].dropna().unique()
+            unique_years = sorted(unique_years)
+            unique_years = ["All"] + list(unique_years)
+            selected_year = st.radio("Select a Year:", unique_years, key="year_selection_location_200hr")
+
+            # Filter data berdasarkan tahun yang dipilih
+            if selected_year != "All":
+                year_data = data_200hr_batches[data_200hr_batches['Year'] == selected_year]
+                
+                # Konversi kolom 'Batch start date' ke datetime
+                if 'Batch start date' in year_data.columns:
+                    year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
+                
+                unique_months = year_data['Batch start date'].dt.month.dropna().unique()
+                unique_months = sorted(unique_months)
+                month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
+                selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_200hr")
+            else:
+                selected_month = "All"
+                year_data = data_200hr_batches
+
+            # Filter data lebih lanjut berdasarkan bulan jika bulan bukan "All"
+            if selected_month != "All":
+                month_num = datetime.strptime(selected_month, '%B').month
+                filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
+            else:
+                filtered_data = year_data
+
+            # Tampilkan data yang telah difilter untuk 200HR
+            st.write("Filtered Batch Data for 200HR Program:")
+            st.dataframe(filtered_data)
+
         elif program == "300HR":
+            # Filter data untuk kategori 300HR
             data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
-            st.write("Batch Data for 300HR Program")
-            st.write(data_300hr_batches)
+            
+            # Radio button untuk memilih tahun (Year) pada program 300HR
+            unique_years = data_300hr_batches['Year'].dropna().unique()
+            unique_years = sorted(unique_years)
+            unique_years = ["All"] + list(unique_years)
+            selected_year = st.radio("Select a Year:", unique_years, key="year_selection_location_300hr")
+
+            # Filter data berdasarkan tahun yang dipilih
+            if selected_year != "All":
+                year_data = data_300hr_batches[data_300hr_batches['Year'] == selected_year]
+                
+                # Konversi kolom 'Batch start date' ke datetime
+                if 'Batch start date' in year_data.columns:
+                    year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
+                
+                unique_months = year_data['Batch start date'].dt.month.dropna().unique()
+                unique_months = sorted(unique_months)
+                month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
+                selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_300hr")
+            else:
+                selected_month = "All"
+                year_data = data_300hr_batches
+
+            # Filter data lebih lanjut berdasarkan bulan jika bulan bukan "All"
+            if selected_month != "All":
+                month_num = datetime.strptime(selected_month, '%B').month
+                filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
+            else:
+                filtered_data = year_data
+
+            # Tampilkan data yang telah difilter untuk 300HR
+            st.write("Filtered Batch Data for 300HR Program:")
+            st.dataframe(filtered_data)
 
     elif bali_option == "Batch":
         # Batch details based on program selection
