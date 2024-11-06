@@ -19,10 +19,10 @@ st.markdown(f"<h3 style='text-align: center; font-size: 16px;'>{today.strftime('
 current_month = today.month
 
 if location == "Bali":
-    # Sub-dropdown for specific options under "Bali"
-    bali_option = st.sidebar.selectbox("Choose a Section:", ["Overview", "Location", "Batch"])
     occupancy_url = "https://raw.githubusercontent.com/antoniusawe/sales-report/main/Bali%20data/bali_occupancy.xlsx"
     sales_url = "https://raw.githubusercontent.com/antoniusawe/sales-report/main/Bali%20data/bali_sales.xlsx"
+    # Sub-dropdown for specific options under "Bali"
+    bali_option = st.sidebar.selectbox("Choose a Section:", ["Overview", "Location", "Batch"])
     
     try:
         # Load data for occupancy and sales
