@@ -197,7 +197,7 @@ if location == "Bali":
         elif program == "300HR":
             # Filter data untuk kategori 300HR
             data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
-            st.write("Batch Data for 300HR Program")
+            # st.write("Batch Data for 300HR Program")
 
             # Radio button untuk memilih tahun (Year) pada program 300HR
             unique_years = data_300hr_batches['Year'].dropna().unique()
@@ -230,8 +230,8 @@ if location == "Bali":
             else:
                 filtered_data = data_300hr_batches
 
-            st.write("Filtered data for 300HR:")
-            st.dataframe(filtered_data)
+            # st.write("Filtered data for 300HR:")
+            # st.dataframe(filtered_data)
 
             # Menghitung metrik
             newest_batch_date = filtered_data['Batch start date'].max()
