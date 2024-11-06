@@ -418,6 +418,39 @@ if location == "Bali":
             st.write("Filtered Batch Data for 300HR Program:")
             st.dataframe(filtered_data)
 
+        # Menambahkan pilihan untuk analisis
+        location_analysis_option = st.radio(
+            "Select Analysis Type:",
+            ["Occupancy Rate", "Location Performance"]
+        )
+
+        if location_analysis_option == "Occupancy Rate":
+            # Mengambil data occupancy untuk bulan ini dan dua bulan sebelumnya
+            current_date = datetime.today()
+            month_range = [(current_date - pd.DateOffset(months=i)).month for i in range(3)]
+            occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Batch start date'].dt.month.isin(month_range)]
+
+            if occupancy_data_filtered.empty:
+                st.write("No occupancy data available for the selected period.")
+            else:
+                average_occupancy = occupancy_data_filtered['Occupancy'].mean()
+                st.write(f"Average Occupancy Rate for the past three months: {average_occupancy:.2f}%")
+                st.dataframe(occupancy_data_filtered)
+
+        elif location_analysis_option == "Location Performance":
+            # Contoh analisis performa lokasi berdasarkan 'Fill'
+            location_performance_data = bali_occupancy_data.groupby('Site')['Fill'].sum().reset_index()
+            location_performance_data = location_performance_data.sort_values(by='Fill', ascending=False)
+
+            if location_performance_data.empty:
+                st.write("No location performance data available.")
+            else:
+                st.write("Location Performance based on Fill:")
+                st.dataframe(location_performance_data)
+                
+                # Bisa menambahkan chart atau visualisasi lain jika dibutuhkan
+
+
     elif bali_option == "Batch":
         # Batch details based on program selection
         st.write(f"Batch details for {program} program")
