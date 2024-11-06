@@ -75,10 +75,6 @@ if location == "Bali":
             else:
                 filtered_data = year_data
 
-            # Tampilkan data yang difilter
-            st.write("Filtered data:")
-            st.dataframe(filtered_data)
-
             # Menghitung metrik
             newest_batch_date = filtered_data['Batch start date'].max()
             cut_off_date = newest_batch_date.strftime('%d %b %Y') if pd.notnull(newest_batch_date) else "No date available"
@@ -92,8 +88,16 @@ if location == "Bali":
             # Rata-rata occupancy untuk data yang difilter berdasarkan Occupancy di occupancy data
             if selected_year != "All" or selected_month != "All":
                 occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Year'] == selected_year] if selected_year != "All" else bali_occupancy_data
+                
+                # Pastikan kolom 'Batch start date' dalam 'occupancy_data_filtered' berformat datetime
+                if 'Batch start date' in occupancy_data_filtered.columns:
+                    occupancy_data_filtered['Batch start date'] = pd.to_datetime(occupancy_data_filtered['Batch start date'], errors='coerce')
+                
+                # Filter berdasarkan bulan jika bulan bukan "All"
                 if selected_month != "All":
+                    month_num = datetime.strptime(selected_month, '%B').month
                     occupancy_data_filtered = occupancy_data_filtered[occupancy_data_filtered['Batch start date'].dt.month == month_num]
+
                 average_occupancy = occupancy_data_filtered['Occupancy'].mean()
             else:
                 average_occupancy = bali_occupancy_data['Occupancy'].mean()
