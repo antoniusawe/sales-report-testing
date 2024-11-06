@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_echarts import st_echarts
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 # Sidebar dropdown for location
 location = st.sidebar.selectbox("Choose a Location:", ["Bali", "India"])
@@ -41,18 +40,20 @@ if location == "Bali":
         st.error("Failed to load data. Please check the URL or your connection.")
         st.write(f"Error: {e}")
 
-    program = st.selectbox("Choose a Program:", ["200HR", "300HR"])
-    
+    # Dropdown for program selection when location is "Bali"
+    program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_bali")
+
     if bali_option == "Overview":
-        # Dropdown for program selection when bali_option is "Overview"
-        program = st.selectbox("Choose a Program:", ["200HR", "300HR"])
-        
         if program == "200HR":
             # Filter data for 200HR category
             data_200hr_bali = bali_sales_data[bali_sales_data['Category'] == '200HR']
+            st.write("Ini adalah Overview untuk program 200HR")
+            # Tambahkan analisis atau tampilan data untuk program 200HR di sini
+
         elif program == "300HR":
             st.write("Ini adalah Overview untuk program 300HR")
+            # Tambahkan analisis atau tampilan data untuk program 300HR di sini
 
 elif location == "India":
     # Dropdown for program selection when location is "India"
-    program = st.selectbox("Choose a Program:", ["200HR", "300HR"])
+    program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_india")
