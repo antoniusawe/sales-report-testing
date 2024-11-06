@@ -379,7 +379,7 @@ if location == "Bali":
 
             # Tampilkan data yang telah difilter untuk 200HR
             st.write("Filtered Batch Data for 200HR Program:")
-            st.dataframe(filtered_data)
+            # st.dataframe(filtered_data)
 
         elif program == "300HR":
             # Filter data untuk kategori 300HR
@@ -416,7 +416,7 @@ if location == "Bali":
 
             # Tampilkan data yang telah difilter untuk 300HR
             st.write("Filtered Batch Data for 300HR Program:")
-            st.dataframe(filtered_data)
+            # st.dataframe(filtered_data)
 
         # Menambahkan pilihan untuk analisis
         location_analysis_option = st.radio(
@@ -435,7 +435,7 @@ if location == "Bali":
             else:
                 average_occupancy = occupancy_data_filtered['Occupancy'].mean()
                 st.write(f"Average Occupancy Rate for the past three months: {average_occupancy:.2f}%")
-                st.dataframe(occupancy_data_filtered)
+                # st.dataframe(occupancy_data_filtered)
 
         elif location_analysis_option == "Location Performance":
             # Contoh analisis performa lokasi berdasarkan 'Fill'
@@ -446,7 +446,7 @@ if location == "Bali":
                 st.write("No location performance data available.")
             else:
                 st.write("Location Performance based on Fill:")
-                st.dataframe(location_performance_data)
+                # st.dataframe(location_performance_data)
                 
                 # Bisa menambahkan chart atau visualisasi lain jika dibutuhkan
 
