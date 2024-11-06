@@ -46,18 +46,15 @@ if location == "Bali":
 
         # Pilihan program (200HR atau 300HR) akan menentukan data mana yang digunakan
         if program == "200HR":
-            # Filter data untuk kategori 200HR
             data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
             st.write("Batch Data for 200HR Program")
 
-            # Radio button untuk memilih tahun (Year)
             unique_years = data_200hr_batches['Year'].dropna().unique()
             unique_years = sorted(unique_years)
             unique_years = ["All"] + list(unique_years)
             selected_year = st.radio("Select a Year:", unique_years, key="year_selection_200hr")
 
             if selected_year != "All":
-                # Filter data untuk tahun yang dipilih
                 year_data = data_200hr_batches[data_200hr_batches['Year'] == selected_year]
                 unique_months = year_data['Batch start date'].dt.month.dropna().unique()
                 unique_months = sorted(unique_months)
@@ -67,12 +64,20 @@ if location == "Bali":
                 selected_month = "All"
                 year_data = data_200hr_batches
 
+            # Tambahkan ini sebelum filter berdasarkan `selected_month`
+            if 'Batch start date' in year_data.columns:
+                year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
+
             # Filter data lebih lanjut untuk bulan jika bulan bukan "All"
             if selected_month != "All":
                 month_num = datetime.strptime(selected_month, '%B').month
                 filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
             else:
                 filtered_data = year_data
+
+            # Tampilkan data yang difilter
+            st.write("Filtered data:")
+            st.dataframe(filtered_data)
 
             # Menghitung metrik
             newest_batch_date = filtered_data['Batch start date'].max()
