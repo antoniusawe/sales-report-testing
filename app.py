@@ -46,16 +46,23 @@ if location == "Bali":
 
         # Pilihan program (200HR atau 300HR) akan menentukan data mana yang digunakan
         if program == "200HR":
+            # Filter data untuk kategori 200HR
             data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
-            # st.write("Batch Data for 200HR Program")
-
+            
+            # Radio button untuk memilih tahun (Year) pada program 200HR
             unique_years = data_200hr_batches['Year'].dropna().unique()
             unique_years = sorted(unique_years)
             unique_years = ["All"] + list(unique_years)
             selected_year = st.radio("Select a Year:", unique_years, key="year_selection_200hr")
 
             if selected_year != "All":
+                # Filter data untuk tahun yang dipilih
                 year_data = data_200hr_batches[data_200hr_batches['Year'] == selected_year]
+                
+                # Pastikan kolom 'Batch start date' dalam year_data berformat datetime
+                if 'Batch start date' in year_data.columns:
+                    year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
+                
                 unique_months = year_data['Batch start date'].dt.month.dropna().unique()
                 unique_months = sorted(unique_months)
                 month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
@@ -64,45 +71,28 @@ if location == "Bali":
                 selected_month = "All"
                 year_data = data_200hr_batches
 
-            # Tambahkan ini sebelum filter berdasarkan `selected_month`
-            if 'Batch start date' in year_data.columns:
-                year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
-
             # Filter data lebih lanjut untuk bulan jika bulan bukan "All"
             if selected_month != "All":
                 month_num = datetime.strptime(selected_month, '%B').month
                 filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
-            else:
-                filtered_data = year_data
-
-            # Menghitung metrik
-            newest_batch_date = filtered_data['Batch start date'].max()
-            cut_off_date = newest_batch_date.strftime('%d %b %Y') if pd.notnull(newest_batch_date) else "No date available"
-            
-            # Total booking (count) untuk siswa dengan BALANCE = 0
-            total_booking_ctr = filtered_data[filtered_data["BALANCE"] == 0]["NAME"].count()
-
-            # Total amount yang sudah dibayar (PAID) dengan BALANCE = 0
-            total_paid_amount = filtered_data[filtered_data["BALANCE"] == 0]["PAID"].sum()
-
-            # Rata-rata occupancy untuk data yang difilter berdasarkan Occupancy di occupancy data
-            if selected_year != "All" or selected_month != "All":
-                occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Year'] == selected_year] if selected_year != "All" else bali_occupancy_data
                 
-                # Pastikan kolom 'Batch start date' dalam 'occupancy_data_filtered' berformat datetime
+                # Filter bali_occupancy_data juga berdasarkan bulan yang dipilih
+                occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Year'] == selected_year] if selected_year != "All" else bali_occupancy_data
                 if 'Batch start date' in occupancy_data_filtered.columns:
                     occupancy_data_filtered['Batch start date'] = pd.to_datetime(occupancy_data_filtered['Batch start date'], errors='coerce')
-                
-                # Filter berdasarkan bulan jika bulan bukan "All"
-                if selected_month != "All":
-                    month_num = datetime.strptime(selected_month, '%B').month
-                    occupancy_data_filtered = occupancy_data_filtered[occupancy_data_filtered['Batch start date'].dt.month == month_num]
-
-                average_occupancy = occupancy_data_filtered['Occupancy'].mean()
+                occupancy_data_filtered = occupancy_data_filtered[occupancy_data_filtered['Batch start date'].dt.month == month_num]
             else:
-                average_occupancy = bali_occupancy_data['Occupancy'].mean()
+                filtered_data = year_data
+                occupancy_data_filtered = bali_occupancy_data
 
-            # Display Cut-off date and Total Booking in a centered format
+            # Calculate metrics
+            newest_batch_date = filtered_data['Batch start date'].max()
+            cut_off_date = newest_batch_date.strftime('%d %b %Y') if pd.notnull(newest_batch_date) else "No date available"
+            total_booking_ctr = filtered_data[filtered_data["BALANCE"] == 0]["NAME"].count()
+            total_paid_amount = filtered_data[filtered_data["BALANCE"] == 0]["PAID"].sum()
+            average_occupancy = occupancy_data_filtered['Occupancy'].mean()
+
+            # Display metrics
             st.markdown(f"""
             <div style='text-align: left;'>
                 <div style='font-size: 16px; color: #333333;'>Cut-off data: {cut_off_date}</div>
@@ -126,20 +116,12 @@ if location == "Bali":
             </div>
             """, unsafe_allow_html=True)
 
-            # Tambahkan grafik untuk data terpilih
-            # Mengelompokkan data Site, Room, dan Month berdasarkan pilihan pengguna
-            site_fill_data = bali_occupancy_data.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
-            room_fill_data = bali_occupancy_data.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
-            balance_zero_data = filtered_data[filtered_data['BALANCE'] == 0]
-            month_counts = balance_zero_data.groupby('Month')['NAME'].count().reset_index()
-            month_counts = month_counts.sort_values(by='NAME', ascending=False)
+            # Update Top Frequent Sites and Rooms based on filtered occupancy_data_filtered
+            site_fill_data = occupancy_data_filtered.groupby('Site')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
+            room_fill_data = occupancy_data_filtered.groupby('Room')['Fill'].sum().reset_index().sort_values(by='Fill', ascending=False)
 
-            # Mengidentifikasi nilai tertinggi untuk tiap grafik
+            # Chart configurations for Top Frequent Sites
             highest_fill_value_site = site_fill_data['Fill'].max()
-            highest_fill_value_room = room_fill_data['Fill'].max()
-            highest_value_month = month_counts['NAME'].max()
-
-            # Konfigurasi grafik (Site, Room, dan Month) dengan tooltip dan label
             site_bar_chart_data = {
                 "title": {"text": "Top Frequent Sites", "left": "center"},
                 "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
@@ -155,6 +137,8 @@ if location == "Bali":
                 }]
             }
 
+            # Chart configurations for Top Frequent Rooms
+            highest_fill_value_room = room_fill_data['Fill'].max()
             room_bar_chart_data = {
                 "title": {"text": "Top Frequent Rooms", "left": "center"},
                 "tooltip": {"trigger": "item", "formatter": "{b}: {c}"},
@@ -169,6 +153,12 @@ if location == "Bali":
                     "label": {"show": True, "position": "top", "formatter": "{c}", "fontSize": 9, "color": "#333333"}
                 }]
             }
+
+            # Create and display Month bar chart based on fully paid data
+            balance_zero_data = filtered_data[filtered_data['BALANCE'] == 0]
+            month_counts = balance_zero_data.groupby('Month')['NAME'].count().reset_index()
+            month_counts = month_counts.sort_values(by='NAME', ascending=False)
+            highest_value_month = month_counts['NAME'].max()
 
             month_bar_chart_data = {
                 "title": {"text": "Top Months", "left": "center"},
@@ -185,7 +175,7 @@ if location == "Bali":
                 }]
             }
 
-            # Menampilkan grafik berdampingan
+            # Display charts side by side
             col1, col2, col3 = st.columns(3)
             with col1:
                 st_echarts(options=site_bar_chart_data, height="300px")
