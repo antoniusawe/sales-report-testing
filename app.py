@@ -51,6 +51,7 @@ if location == "Bali":
             # Tambahkan analisis atau tampilan data untuk program 200HR di sini
 
         elif program == "300HR":
+            data_300hr_bali = bali_sales_data[bali_sales_data['Category'] == '300HR']
             st.write("Ini adalah Overview untuk program 300HR")
             # Tambahkan analisis atau tampilan data untuk program 300HR di sini
 
