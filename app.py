@@ -56,23 +56,47 @@ if location == "Bali":
             st.warning("Year data not found in the dataset.")
             selected_year = "All"
 
+        # Only show month selection if a specific year is chosen
+        if selected_year != "All":
+            # Filter data for the selected year
+            year_data = bali_sales_data[bali_sales_data['Year'] == selected_year]
+            
+            # Get unique months from the 'Batch start date' or another date column
+            unique_months = year_data['Batch start date'].dt.month.dropna().unique()
+            unique_months = sorted(unique_months)  # Sorting months for better user experience
+            month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]  # Add "All" and month names
+            
+            # Dropdown for month selection
+            selected_month = st.radio("Select a Month:", month_names, key="month_selection")
+        else:
+            selected_month = "All"
+
+        # Filter data based on the program, year, and month
         if program == "200HR":
-            # Filter data for 200HR category and selected year
-            if selected_year == "All":
-                data_200hr_bali = bali_sales_data[bali_sales_data['Category'] == '200HR']
-            else:
-                data_200hr_bali = bali_sales_data[(bali_sales_data['Category'] == '200HR') & (bali_sales_data['Year'] == selected_year)]
+            # Base filter for 200HR and selected year
+            data_200hr_bali = bali_sales_data[(bali_sales_data['Category'] == '200HR')]
+            
+            if selected_year != "All":
+                data_200hr_bali = data_200hr_bali[data_200hr_bali['Year'] == selected_year]
                 
+            if selected_month != "All":
+                month_num = datetime.strptime(selected_month, '%B').month
+                data_200hr_bali = data_200hr_bali[data_200hr_bali['Batch start date'].dt.month == month_num]
+            
             st.write("Ini adalah Overview untuk program 200HR")
             st.write(data_200hr_bali)  # Display the filtered data (or add further analysis)
 
         elif program == "300HR":
-            # Filter data for 300HR category and selected year
-            if selected_year == "All":
-                data_300hr_bali = bali_sales_data[bali_sales_data['Category'] == '300HR']
-            else:
-                data_300hr_bali = bali_sales_data[(bali_sales_data['Category'] == '300HR') & (bali_sales_data['Year'] == selected_year)]
+            # Base filter for 300HR and selected year
+            data_300hr_bali = bali_sales_data[(bali_sales_data['Category'] == '300HR')]
+            
+            if selected_year != "All":
+                data_300hr_bali = data_300hr_bali[data_300hr_bali['Year'] == selected_year]
                 
+            if selected_month != "All":
+                month_num = datetime.strptime(selected_month, '%B').month
+                data_300hr_bali = data_300hr_bali[data_300hr_bali['Batch start date'].dt.month == month_num]
+            
             st.write("Ini adalah Overview untuk program 300HR")
             st.write(data_300hr_bali)  # Display the filtered data (or add further analysis)
 
