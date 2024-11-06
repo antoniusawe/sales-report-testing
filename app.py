@@ -44,16 +44,27 @@ if location == "Bali":
     program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_bali")
 
     if bali_option == "Overview":
+        # Get unique years from the 'Year' column in bali_sales_data
+        if 'Year' in bali_sales_data.columns:
+            unique_years = bali_sales_data['Year'].dropna().unique()
+            unique_years = sorted(unique_years)  # Sorting years for a better user experience
+            
+            # Radio button for year selection
+            selected_year = st.radio("Select a Year:", unique_years, key="year_selection")
+        else:
+            st.warning("Year data not found in the dataset.")
+
         if program == "200HR":
-            # Filter data for 200HR category
-            data_200hr_bali = bali_sales_data[bali_sales_data['Category'] == '200HR']
+            # Filter data for 200HR category and selected year
+            data_200hr_bali = bali_sales_data[(bali_sales_data['Category'] == '200HR') & (bali_sales_data['Year'] == selected_year)]
             st.write("Ini adalah Overview untuk program 200HR")
-            # Tambahkan analisis atau tampilan data untuk program 200HR di sini
+            st.write(data_200hr_bali)  # Display the filtered data (or add further analysis)
 
         elif program == "300HR":
-            data_300hr_bali = bali_sales_data[bali_sales_data['Category'] == '300HR']
+            # Filter data for 300HR category and selected year
+            data_300hr_bali = bali_sales_data[(bali_sales_data['Category'] == '300HR') & (bali_sales_data['Year'] == selected_year)]
             st.write("Ini adalah Overview untuk program 300HR")
-            # Tambahkan analisis atau tampilan data untuk program 300HR di sini
+            st.write(data_300hr_bali)  # Display the filtered data (or add further analysis)
 
 elif location == "India":
     # Dropdown for program selection when location is "India"
