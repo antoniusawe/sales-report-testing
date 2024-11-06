@@ -15,6 +15,12 @@ st.markdown("<h1 style='text-align: center; font-size: 50px;'>HOUSE OF OM - DASH
 if location == "Bali":
     # Sub-dropdown for specific options under "Bali"
     bali_option = st.sidebar.selectbox("Choose a Section:", ["Overview", "Location", "Batch"])
+         if bali_option == "Overview":
+                  if program == "200HR":
+                           st.write("Ini adalah Overview untuk program 200HR")
+                  elif program == "300HR":
+                           st.write("Ini adalah Overview untuk program 300HR")
+                           
 
 elif location == "India":
     # Dropdown for program selection when location is "India"
