@@ -42,12 +42,12 @@ if location == "Bali":
     program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_bali")
 
     if bali_option == "Overview":
-        st.write("Location details for Bali")
+        # st.write("Location details for Bali")
 
         # Pilihan program (200HR atau 300HR) akan menentukan data mana yang digunakan
         if program == "200HR":
             data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
-            st.write("Batch Data for 200HR Program")
+            # st.write("Batch Data for 200HR Program")
 
             unique_years = data_200hr_batches['Year'].dropna().unique()
             unique_years = sorted(unique_years)
