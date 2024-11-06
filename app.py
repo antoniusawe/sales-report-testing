@@ -208,12 +208,18 @@ if location == "Bali":
             if selected_year != "All":
                 # Filter data untuk tahun yang dipilih
                 year_data = data_300hr_batches[data_300hr_batches['Year'] == selected_year]
+                
+                # Pastikan kolom 'Batch start date' dalam year_data berformat datetime
+                if 'Batch start date' in year_data.columns:
+                    year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
+                
                 unique_months = year_data['Batch start date'].dt.month.dropna().unique()
                 unique_months = sorted(unique_months)
                 month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
                 selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_300hr")
             else:
                 selected_month = "All"
+                year_data = data_300hr_batches
 
             # Menampilkan data yang difilter berdasarkan Year dan Month pada 300HR
             if selected_year != "All" and selected_month != "All":
@@ -226,6 +232,56 @@ if location == "Bali":
 
             st.write("Filtered data for 300HR:")
             st.dataframe(filtered_data)
+
+            # Menghitung metrik
+            newest_batch_date = filtered_data['Batch start date'].max()
+            cut_off_date = newest_batch_date.strftime('%d %b %Y') if pd.notnull(newest_batch_date) else "No date available"
+            
+            # Total booking (count) untuk siswa dengan BALANCE = 0
+            total_booking_ctr = filtered_data[filtered_data["BALANCE"] == 0]["NAME"].count()
+
+            # Total amount yang sudah dibayar (PAID) dengan BALANCE = 0
+            total_paid_amount = filtered_data[filtered_data["BALANCE"] == 0]["PAID"].sum()
+
+            # Rata-rata occupancy untuk data yang difilter berdasarkan Occupancy di occupancy data
+            if selected_year != "All" or selected_month != "All":
+                occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Year'] == selected_year] if selected_year != "All" else bali_occupancy_data
+                
+                # Pastikan kolom 'Batch start date' dalam 'occupancy_data_filtered' berformat datetime
+                if 'Batch start date' in occupancy_data_filtered.columns:
+                    occupancy_data_filtered['Batch start date'] = pd.to_datetime(occupancy_data_filtered['Batch start date'], errors='coerce')
+                
+                if selected_month != "All":
+                    month_num = datetime.strptime(selected_month, '%B').month
+                    occupancy_data_filtered = occupancy_data_filtered[occupancy_data_filtered['Batch start date'].dt.month == month_num]
+                
+                average_occupancy = occupancy_data_filtered['Occupancy'].mean()
+            else:
+                average_occupancy = bali_occupancy_data['Occupancy'].mean()
+
+            # Display Cut-off date and Total Booking in a centered format
+            st.markdown(f"""
+            <div style='text-align: left;'>
+                <div style='font-size: 16px; color: #333333;'>Cut-off data: {cut_off_date}</div>
+            </div>
+            <div style='display: flex; justify-content: center; gap: 50px; padding: 20px;'>
+                <div style='text-align: left;'>
+                    <div style='font-size: 16px; color: #333333;'>Total Booking</div>
+                    <div style='font-size: 48px;'>{total_booking_ctr}</div>
+                    <div style='color: #202fb2; font-size: 18px;'>Number of students</div>
+                </div>
+                <div style='text-align: left;'>
+                    <div style='font-size: 16px; color: #333333;'>Amount</div>
+                    <div style='font-size: 48px;'>{total_paid_amount:,.0f}</div>
+                    <div style='color: #202fb2; font-size: 18px;'>in USD or USD equiv</div>
+                </div>
+                <div style='text-align: left;'>
+                    <div style='font-size: 16px; color: #333333;'>Occupancy</div>
+                    <div style='font-size: 48px;'>{average_occupancy:.2f}%</div>
+                    <div style='color: #202fb2; font-size: 18px;'>Occupancy Rate</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 
 
