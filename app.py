@@ -172,7 +172,7 @@ if location == "Bali":
                     "show": True,
                     "position": "top",
                     "formatter": "{c}",
-                    "fontSize": 6,
+                    "fontSize": 9,
                     "color": "#333333"
                 }
             }]
