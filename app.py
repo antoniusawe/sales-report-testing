@@ -32,6 +32,7 @@ if location == "Bali":
         # Convert 'Batch start date' to datetime if it's not already
         if 'Batch start date' in bali_sales_data.columns:
             bali_sales_data['Batch start date'] = pd.to_datetime(bali_sales_data['Batch start date'], errors='coerce')
+        
         # Convert 'Occupancy' column to numeric if it's not already (remove % and convert to float)
         if 'Occupancy' in bali_occupancy_data.columns:
             bali_occupancy_data['Occupancy'] = bali_occupancy_data['Occupancy'].replace('%', '', regex=True).astype(float)
@@ -67,7 +68,7 @@ if location == "Bali":
             month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]  # Add "All" and month names
             
             # Dropdown for month selection
-            selected_month = st.radio("Select a Month:", month_names, key="month_selection")
+            selected_month = st.selectbox("Select a Month:", month_names, key="month_selection")
         else:
             selected_month = "All"
 
