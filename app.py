@@ -342,11 +342,11 @@ if location == "Bali":
 
 
     elif bali_option == "Location":
-        st.write("Location details for Bali")
+        # st.write("Location details for Bali")
         
         if program == "200HR":
             # Filter data untuk kategori 200HR
-            data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
+            data_200hr_batches = bali_occupancy_data[bali_occupancy_data['Category'] == '200HR']
             
             # Radio button untuk memilih tahun (Year) pada program 200HR
             unique_years = data_200hr_batches['Year'].dropna().unique()
@@ -383,7 +383,7 @@ if location == "Bali":
 
         elif program == "300HR":
             # Filter data untuk kategori 300HR
-            data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
+            data_300hr_batches = bali_occupancy_data[bali_occupancy_data['Category'] == '300HR']
             
             # Radio button untuk memilih tahun (Year) pada program 300HR
             unique_years = data_300hr_batches['Year'].dropna().unique()
