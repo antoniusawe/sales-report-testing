@@ -513,17 +513,143 @@ if location == "Bali":
         )
 
         if location_analysis_option == "Occupancy Rate":
-            # Mengambil data occupancy untuk bulan ini dan dua bulan sebelumnya
-            current_date = datetime.today()
-            month_range = [(current_date - pd.DateOffset(months=i)).month for i in range(3)]
-            occupancy_data_filtered = bali_occupancy_data[bali_occupancy_data['Batch start date'].dt.month.isin(month_range)]
+            # Tentukan program yang dipilih, baik "200HR" atau "300HR"
+            selected_program = "200HR" if program == "200HR" else "300HR"
+            
+            # Filter data untuk kategori yang sesuai (200HR atau 300HR)
+            occupancy_data = bali_occupancy_data[bali_occupancy_data['Category'] == selected_program]
 
-            if occupancy_data_filtered.empty:
-                st.write("No occupancy data available for the selected period.")
-            else:
-                average_occupancy = occupancy_data_filtered['Occupancy'].mean()
-                st.write(f"Average Occupancy Rate for the past three months: {average_occupancy:.2f}%")
-                # st.dataframe(occupancy_data_filtered)
+            # Filter occupancy data untuk bulan saat ini dan dua bulan sebelumnya
+            current_month = datetime.now().strftime('%B')
+            previous_month_1 = (datetime.now().replace(day=1) - pd.DateOffset(months=1)).strftime('%B')
+            previous_month_2 = (datetime.now().replace(day=1) - pd.DateOffset(months=2)).strftime('%B')
+            base_month = (datetime.now().replace(day=1) - pd.DateOffset(months=3)).strftime('%B')  # Bulan sebagai baseline
+
+            # Pastikan kolom 'Occupancy' dalam bentuk numerik setelah menghapus '%'
+            occupancy_data['Occupancy'] = occupancy_data['Occupancy'].astype(str).str.replace('%', '', regex=True).astype(float)
+
+            # Membuat tabel ringkasan occupancy untuk baseline dan tiga bulan terakhir
+            occupancy_summary = occupancy_data.pivot_table(
+                index='Site',
+                columns='Month',
+                values='Occupancy',
+                aggfunc='mean'
+            ).fillna(0)
+
+            # Filter hanya untuk bulan-bulan yang relevan
+            occupancy_summary = occupancy_summary[[base_month, previous_month_2, previous_month_1, current_month]]
+
+            # Hitung Growth untuk setiap bulan dibandingkan dengan bulan sebelumnya
+            growth_summary = occupancy_summary.pct_change(axis=1) * 100  # Hitung sebagai persentase
+            growth_summary = growth_summary[[previous_month_2, previous_month_1, current_month]].copy()
+
+            # Styling pertumbuhan untuk tampilan
+            def style_growth(value):
+                if value > 0:
+                    color = "green"
+                elif value < 0:
+                    color = "red"
+                else:
+                    color = "black"
+                return f"<span style='color: {color};'>{value:.2f}%</span>"
+
+            # Terapkan styling untuk setiap sel dalam DataFrame untuk growth_display
+            growth_display = growth_summary.applymap(style_growth)
+
+            st.markdown(
+                f"<div style='display: flex; justify-content: center; margin-top: 20px;'>"
+                f"<div style='text-align: center;'>"
+                f"<p style='font-size: 14px; font-weight: bold; color: #333;'>"
+                f"Avg Occupancy for {previous_month_2}, {previous_month_1}, and {current_month} ({selected_program})</p>"
+                f"</div></div>",
+                unsafe_allow_html=True
+            )
+
+            # Tampilkan occupancy_summary dalam format tabel
+            st.markdown(
+                f"<div style='display: flex; justify-content: center;'>"
+                f"{occupancy_summary[[previous_month_2, previous_month_1, current_month]].applymap(lambda x: f'{x:.2f}%').to_html(index=True, classes='dataframe', border=0)}"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+
+            # Siapkan data untuk bar chart
+            sites = occupancy_summary.index.tolist()  # Daftar site
+            months = [previous_month_2, previous_month_1, current_month]  # Daftar bulan
+
+            # Inisialisasi data seri untuk setiap bulan
+            series_data = []
+            for month in months:
+                # Ambil nilai rata-rata occupancy untuk setiap site
+                avg_values = occupancy_summary[month].values.tolist()
+
+                # Buat entri seri untuk chart dengan tooltip
+                series_data.append({
+                    "name": month,
+                    "type": "bar",
+                    "data": avg_values,
+                })
+
+            # Definisikan opsi chart dengan tooltip
+            chart_options = {
+                "title": {
+                    "text": f"Occupancy Rate ({selected_program})",
+                    "left": "center",
+                    "top": "top",
+                    "textStyle": {"fontSize": 16, "fontWeight": "bold"}
+                },
+                "tooltip": {
+                    "trigger": "item",
+                    "formatter": "{a} <br/>{b}: {c}%",  # Menampilkan nama bulan, site, dan nilai
+                    "axisPointer": {
+                        "type": "shadow"
+                    },
+                },
+                "legend": {
+                    "data": months,
+                    "orient": "horizontal",
+                    "bottom": "0",
+                    "left": "center"
+                },
+                "xAxis": {
+                    "type": "category",
+                    "data": sites,
+                    "axisLabel": {
+                        "interval": 0,
+                        "fontSize": 12,
+                        "rotate": 0,
+                        "fontWeight": "bold"
+                    }
+                },
+                "yAxis": {
+                    "type": "value",
+                    "axisLabel": {
+                        "formatter": "{value}%",  # Menampilkan persentase
+                        "fontSize": 12
+                    }
+                },
+                "series": series_data
+            }
+
+            # Render bar chart
+            st.markdown("<div style='display: flex; justify-content: center; margin-top: 10px;'>", unsafe_allow_html=True)
+            st_echarts(options=chart_options, height="400px")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            # Tampilkan tabel pertumbuhan dengan styling
+            st.markdown(
+                f"<div style='text-align: center; font-size: 14px; font-weight: bold; color: #333; margin-top: 20px;'>"
+                f"Growth Occupancy Rate from Previous Months</div>",
+                unsafe_allow_html=True
+            )
+
+            # Pusatkan tampilan growth table dengan div wrapper
+            st.markdown(
+                f"<div style='display: flex; justify-content: center; margin-top: 10px;'>"
+                f"{growth_display.to_html(escape=False, index=True)}"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
         elif location_analysis_option == "Location Performance":
             # Contoh analisis performa lokasi berdasarkan 'Fill'
