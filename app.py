@@ -354,11 +354,14 @@ if location == "Bali":
 
             # Filter data berdasarkan tahun yang dipilih
             year_data = data_200hr_batches if selected_year == "All" else data_200hr_batches[data_200hr_batches['Year'] == selected_year]
-            
-            # Selectbox untuk memilih bulan
-            unique_months = sorted(year_data['Batch start date'].dt.month.dropna().unique())
-            month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
-            selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_200hr")
+
+            # Menampilkan Selectbox untuk memilih bulan hanya jika tahun yang dipilih bukan "All"
+            if selected_year != "All":
+                unique_months = sorted(year_data['Batch start date'].dt.month.dropna().unique())
+                month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
+                selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_200hr")
+            else:
+                selected_month = "All"  # Set selected month to "All" jika tahun "All" dipilih
 
             # Menentukan bulan saat ini atau bulan yang dipilih untuk ditampilkan
             if selected_year == "All" or selected_month == "All":
@@ -855,7 +858,7 @@ elif location == "India":
     # Load and process data if "200HR" is selected
     if program == "200HR":
         # Load the Excel file from the URL
-        url = "https://raw.githubusercontent.com/antoniusawe/sales-report-testing/main/RYP%20data/ryp_student_database_200hr.xlsx"
+        url = "https://raw.githubusercontent.com/antoniusawe/sales-report/main/RYP%20data/ryp_student_database_200hr.xlsx"
         
         try:
             data_200hr = pd.read_excel(url)
@@ -1091,7 +1094,7 @@ elif location == "India":
     # Load and process data if "200HR" is selected
     elif program == "300HR":
         # Load the Excel file from the URL
-        url = "https://raw.githubusercontent.com/antoniusawe/sales-report-testing/main/RYP%20data/ryp_student_database_300hr.xlsx"
+        url = "https://raw.githubusercontent.com/antoniusawe/sales-report/main/RYP%20data/ryp_student_database_300hr.xlsx"
         
         try:
             data_300hr = pd.read_excel(url)
