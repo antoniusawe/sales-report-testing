@@ -821,11 +821,9 @@ if location == "Bali":
         # Mengisi nilai kosong di kolom 'Group' dengan label 'No Group'
         selected_site_data['Group'] = selected_site_data['Group'].fillna('No Group')
 
-        # Menambahkan pilihan untuk program 200HR atau 300HR
-        program_option = st.selectbox("Select Program", ["200HR", "300HR"])
-
-        # Filter data berdasarkan program yang dipilih
-        program_data = selected_site_data[selected_site_data['Category'] == program_option]
+        # Menggunakan pilihan program dari dropdown yang ada di atas (misalnya, `program` variabel yang sudah dipilih pengguna)
+        # Filter data berdasarkan program yang sudah dipilih (200HR atau 300HR)
+        program_data = selected_site_data[selected_site_data['Category'] == program]
 
         if program_data.empty:
             st.write("No data available for the selected site and program.")
@@ -836,7 +834,7 @@ if location == "Bali":
             ).agg(
                 FULLY_PAID=('PAID STATUS', lambda x: (x == 'FULLY PAID').sum()),
                 DEPOSIT=('PAID STATUS', lambda x: (x == 'DEPOSIT').sum()),
-                NOT_PAID=('PAID STATUS', lambda x: (x.isna()).sum())
+                NOT_PAID=('PAID STATUS', lambda x: x.isna().sum())
             ).reset_index()
 
             # Menambahkan kolom 'Total' sebagai jumlah dari fully_paid, deposit, dan not_paid
@@ -846,7 +844,7 @@ if location == "Bali":
             grouped_data['Year'] = grouped_data['Year'].astype(str)
 
             # Tampilkan hasil dalam bentuk tabel di Streamlit
-            st.markdown(f"### Data for Site: {site_option} ({program_option} Program)")
+            st.markdown(f"### Data for Site: {site_option} ({program} Program)")
             st.dataframe(grouped_data)
 
 elif location == "India":
