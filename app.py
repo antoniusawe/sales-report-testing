@@ -423,41 +423,84 @@ if location == "Bali":
             st.markdown("<br>", unsafe_allow_html=True)
 
         elif program == "300HR":
-            # Filter data untuk kategori 300HR
+            # Filter data untuk kategori 300HR dan konversi kolom 'Batch start date'
             data_300hr_batches = bali_occupancy_data[bali_occupancy_data['Category'] == '300HR']
-            
-            # Radio button untuk memilih tahun (Year) pada program 300HR
-            unique_years = data_300hr_batches['Year'].dropna().unique()
-            unique_years = sorted(unique_years)
-            unique_years = ["All"] + list(unique_years)
+            if 'Batch start date' in data_300hr_batches.columns:
+                data_300hr_batches['Batch start date'] = pd.to_datetime(data_300hr_batches['Batch start date'], errors='coerce')
+
+            # Radio button untuk memilih tahun (Year)
+            unique_years = ["All"] + sorted(data_300hr_batches['Year'].dropna().unique())
             selected_year = st.radio("Select a Year:", unique_years, key="year_selection_location_300hr")
 
             # Filter data berdasarkan tahun yang dipilih
-            if selected_year != "All":
-                year_data = data_300hr_batches[data_300hr_batches['Year'] == selected_year]
-                
-                # Konversi kolom 'Batch start date' ke datetime
-                if 'Batch start date' in year_data.columns:
-                    year_data['Batch start date'] = pd.to_datetime(year_data['Batch start date'], errors='coerce')
-                
-                unique_months = year_data['Batch start date'].dt.month.dropna().unique()
-                unique_months = sorted(unique_months)
-                month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
-                selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_300hr")
-            else:
-                selected_month = "All"
-                year_data = data_300hr_batches
+            year_data = data_300hr_batches if selected_year == "All" else data_300hr_batches[data_300hr_batches['Year'] == selected_year]
+            
+            # Selectbox untuk memilih bulan
+            unique_months = sorted(year_data['Batch start date'].dt.month.dropna().unique())
+            month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
+            selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_300hr")
 
-            # Filter data lebih lanjut berdasarkan bulan jika bulan bukan "All"
-            if selected_month != "All":
+            # Menentukan bulan saat ini atau bulan yang dipilih untuk ditampilkan
+            if selected_year == "All" or selected_month == "All":
+                # Get the current month if "All" is selected
+                current_month = datetime.now().strftime('%B')
+                filtered_data = bali_occupancy_data[bali_occupancy_data['Month'] == current_month]
+            else:
+                # Filter berdasarkan bulan yang dipilih
                 month_num = datetime.strptime(selected_month, '%B').month
                 filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
-            else:
-                filtered_data = year_data
+                current_month = selected_month
 
-            # Tampilkan data yang telah difilter untuk 300HR
-            st.write("Filtered Batch Data for 300HR Program:")
-            # st.dataframe(filtered_data)
+            # Menghitung ketersediaan per site dan per tanggal batch
+            site_availability_summary = filtered_data.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
+            
+            # Pastikan kolom 'Batch start date' dalam format datetime
+            if site_availability_summary['Batch start date'].dtype == 'O':  # 'O' stands for object type
+                site_availability_summary['Batch start date'] = pd.to_datetime(site_availability_summary['Batch start date'], errors='coerce')
+
+            # Agregasi data dengan memastikan format tanggal sesuai
+            aggregated_data = site_availability_summary.groupby('Site').agg({
+                'Available': 'sum',
+                'Batch start date': lambda x: ', '.join([
+                    f"{a.strftime('%d %b %Y')} ({b})" if pd.notnull(a) else "Unknown Date"
+                    for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])
+                ])
+            }).reset_index()
+
+            # Rename columns for clarity
+            aggregated_data.columns = ['Site', 'Total Available', 'Batch Details']
+
+            st.markdown(f"""
+                <h3 style='text-align: center;'>Availability for Sites in {current_month}</h3>
+            """, unsafe_allow_html=True)
+
+            # Define the number of columns per row to control the layout
+            num_columns = 4
+            rows = [st.columns(num_columns) for _ in range((len(aggregated_data) + num_columns - 1) // num_columns)]
+
+            # Display data in a grid format
+            for index, row in enumerate(aggregated_data.iterrows()):
+                site_name = row[1]['Site']
+                total_available = row[1]['Total Available']
+                batch_details = row[1]['Batch Details']
+                
+                row_index = index // num_columns
+                col_index = index % num_columns
+
+                with rows[row_index][col_index]:
+                    st.markdown(f"""
+                        <div style='text-align: center; width: 200px; padding: 20px; margin: 10px;'>
+                            <div style='font-size: 16px; color: #333333;'>{site_name}</div>
+                            <br>
+                            <div style='font-size: 48px; color: #202fb2;'>{total_available}</div>
+                            <div style='color: #202fb2; font-size: 18px;'>Total Available Rooms</div>
+                            <br>
+                            <div style='font-size: 16px; color: #333333;'>Batch:</div>
+                            <div style='font-size: 14px; color: #666666;'>{batch_details}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
 
         # Menambahkan pilihan untuk analisis
         location_analysis_option = st.radio(
