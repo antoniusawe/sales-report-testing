@@ -659,17 +659,141 @@ if location == "Bali":
                 )
 
         elif location_analysis_option == "Location Performance":
-            # Contoh analisis performa lokasi berdasarkan 'Fill'
-            location_performance_data = bali_occupancy_data.groupby('Site')['Fill'].sum().reset_index()
-            location_performance_data = location_performance_data.sort_values(by='Fill', ascending=False)
+            # Tentukan program yang dipilih, baik "200HR" atau "300HR"
+            selected_program = "200HR" if program == "200HR" else "300HR"
 
-            if location_performance_data.empty:
-                st.write("No location performance data available.")
+            # Filter data untuk kategori yang sesuai (200HR atau 300HR)
+            performance_data = bali_occupancy_data[bali_occupancy_data['Category'] == selected_program]
+
+            # Tentukan bulan untuk analisis
+            current_month = datetime.now().strftime('%B')
+            previous_month_1 = (datetime.now().replace(day=1) - pd.DateOffset(months=1)).strftime('%B')
+            previous_month_2 = (datetime.now().replace(day=1) - pd.DateOffset(months=2)).strftime('%B')
+            base_month = (datetime.now().replace(day=1) - pd.DateOffset(months=3)).strftime('%B')  # Bulan baseline
+
+            # Membuat tabel "Site Filled" berdasarkan nilai "Fill", termasuk base_month untuk perhitungan
+            fill_summary = performance_data.pivot_table(
+                index='Site',
+                columns='Month',
+                values='Fill',
+                aggfunc='sum'
+            ).fillna(0)
+            
+            # Pastikan kolom yang diperlukan ada di `fill_summary`
+            required_months = [base_month, previous_month_2, previous_month_1, current_month]
+            available_months = [month for month in required_months if month in fill_summary.columns]
+
+            if len(available_months) < 3:
+                st.write("No sufficient data available for the selected filters.")
             else:
-                st.write("Location Performance based on Fill:")
-                # st.dataframe(location_performance_data)
+                # Filter hanya untuk bulan-bulan yang tersedia
+                fill_summary = fill_summary[available_months].astype(int)
+
+                # Tampilkan tabel "Site Filled" hanya untuk tiga bulan terakhir (tanpa base_month)
+                st.markdown(
+                    f"<div style='text-align: center; font-size: 14px; font-weight: bold; color: #333;'>"
+                    f"Students for {', '.join(available_months[1:])} ({selected_program})</div><br>",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<div style='display: flex; justify-content: center;'>"
+                    f"{fill_summary[available_months[1:]].to_html(index=True, classes='dataframe', border=0)}"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+
+                # Siapkan data untuk grafik batang (menggunakan bulan yang ditampilkan saja)
+                sites = fill_summary.index.tolist()  # Daftar situs (baris)
+                months = available_months[1:]  # Daftar bulan untuk tampilan
+
+                # Inisialisasi data seri untuk setiap bulan
+                series_data = []
+                for month in months:
+                    # Ambil nilai Fill untuk setiap site
+                    fill_values = fill_summary[month].values.tolist()
+                    
+                    # Buat entri seri untuk chart dengan tooltip
+                    series_data.append({
+                        "name": month,
+                        "type": "bar",
+                        "data": fill_values,
+                    })
+
+                # Definisikan opsi chart dengan tooltip
+                chart_options = {
+                    "title": {
+                        "text": f"Number of Students by Month ({selected_program})",
+                        "left": "center",
+                        "top": "top",
+                        "textStyle": {"fontSize": 16, "fontWeight": "bold"}
+                    },
+                    "tooltip": {
+                        "trigger": "item",
+                        "formatter": "{a} <br/>{b}: {c}",  # Menampilkan nama bulan, site, dan nilai
+                        "axisPointer": {
+                            "type": "shadow"
+                        },
+                    },
+                    "legend": {
+                        "data": months,
+                        "orient": "horizontal",
+                        "bottom": "0",
+                        "left": "center"
+                    },
+                    "xAxis": {
+                        "type": "category",
+                        "data": sites,
+                        "axisLabel": {
+                            "interval": 0,
+                            "fontSize": 12,
+                            "rotate": 0,
+                            "fontWeight": "bold"
+                        }
+                    },
+                    "yAxis": {
+                        "type": "value",
+                        "axisLabel": {
+                            "formatter": "{value}",  # Menampilkan nilai sebagai bilangan bulat
+                            "fontSize": 12
+                        }
+                    },
+                    "series": series_data
+                }
+
+                # Render bar chart
+                st.markdown("<div style='display: flex; justify-content: center; margin-top: 10px;'>", unsafe_allow_html=True)
+                st_echarts(options=chart_options, height="400px")
+                st.markdown("</div>", unsafe_allow_html=True)
+
+                # Hitung Growth Summary sebagai perbedaan jumlah siswa untuk tiga bulan terakhir saja
+                growth_summary = fill_summary.diff(axis=1)  # Hitung perbedaan antara bulan-bulan berurutan
+                growth_summary = growth_summary[available_months[1:]].copy()  # Tampilkan hanya tiga bulan terakhir
                 
-                # Bisa menambahkan chart atau visualisasi lain jika dibutuhkan
+                # Styling pertumbuhan untuk tampilan
+                def style_growth(value):
+                    if value > 0:
+                        color = "green"
+                    elif value < 0:
+                        color = "red"
+                    else:
+                        color = "black"
+                    return f"<span style='color: {color};'>{value}</span>"
+
+                # Terapkan styling ke growth summary
+                growth_display = growth_summary.applymap(style_growth)
+
+                # Tampilkan Growth Summary table di bagian bawah
+                st.markdown(
+                    f"<div style='text-align: center; font-size: 14px; font-weight: bold; color: #333; margin-top: 20px;'>"
+                    f"Growth in Number of Students from Previous Months</div>",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<div style='display: flex; justify-content: center; margin-top: 10px;'>"
+                    f"{growth_display.to_html(escape=False, index=True)}"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
 
 
     elif bali_option == "Batch":
