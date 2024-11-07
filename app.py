@@ -844,7 +844,7 @@ if location == "Bali":
             grouped_data['Year'] = grouped_data['Year'].astype(str)
 
             # Tampilkan hasil dalam bentuk tabel di Streamlit
-            st.markdown(f"### Data for Site: {site_option} ({program} Program)")
+            st.markdown(f"### {site_option} ({program} Program)")
             st.dataframe(grouped_data)
 
 elif location == "India":
