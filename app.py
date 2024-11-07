@@ -442,11 +442,11 @@ if location == "Bali":
 
             # Menentukan bulan saat ini atau bulan yang dipilih untuk ditampilkan
             if selected_year == "All" or selected_month == "All":
-                # Get the current month if "All" is selected
+                # Get the current month if "All" is selected, filtered only for 300HR data
                 current_month = datetime.now().strftime('%B')
-                filtered_data = bali_occupancy_data[bali_occupancy_data['Month'] == current_month]
+                filtered_data = data_300hr_batches[data_300hr_batches['Month'] == current_month]
             else:
-                # Filter berdasarkan bulan yang dipilih
+                # Filter berdasarkan bulan yang dipilih untuk 300HR
                 month_num = datetime.strptime(selected_month, '%B').month
                 filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
                 current_month = selected_month
