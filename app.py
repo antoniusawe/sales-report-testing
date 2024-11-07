@@ -374,10 +374,16 @@ if location == "Bali":
             # Menghitung ketersediaan per site dan per tanggal batch
             site_availability_summary = filtered_data.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
 
+            # Pastikan kolom 'Batch start date' sudah dalam format datetime
+            if site_availability_summary['Batch start date'].dtype == 'O':  # 'O' stands for object type
+                site_availability_summary['Batch start date'] = pd.to_datetime(site_availability_summary['Batch start date'], errors='coerce')
+
+            # Agregasi data dengan memastikan format tanggal sesuai
             aggregated_data = site_availability_summary.groupby('Site').agg({
                 'Available': 'sum',
                 'Batch start date': lambda x: ', '.join([
-                    f"{a.strftime('%d %b %Y')} ({b})" for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])
+                    f"{a.strftime('%d %b %Y')} ({b})" if pd.notnull(a) else "Unknown Date" 
+                    for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])
                 ])
             }).reset_index()
 
