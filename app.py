@@ -846,6 +846,15 @@ if location == "Bali":
             # Menambahkan kolom 'Total' sebagai jumlah dari fully_paid, deposit, dan not_paid
             grouped_data['Total'] = grouped_data['FULLY_PAID'] + grouped_data['DEPOSIT'] + grouped_data['NOT_PAID']
 
+            grouped_data['Month'] = pd.to_datetime(grouped_data['Month'], format='%B')
+            grouped_data['Year'] = grouped_data['Year'].astype(int)  # Pastikan 'Year' adalah integer untuk pengurutan
+
+            # Mengurutkan grouped_data berdasarkan 'Year' dan 'Month'
+            grouped_data = grouped_data.sort_values(by=['Year', 'Month'])
+
+            # Kembalikan 'Month' ke format nama bulan setelah pengurutan
+            grouped_data['Month'] = grouped_data['Month'].dt.strftime('%B')
+
             # Pastikan kolom `Year` tetap dalam tipe string agar tidak menampilkan koma
             grouped_data['Year'] = grouped_data['Year'].astype(str)
 
