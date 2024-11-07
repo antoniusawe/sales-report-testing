@@ -360,62 +360,59 @@ if location == "Bali":
             month_names = ["All"] + [datetime(2000, month, 1).strftime('%B') for month in unique_months]
             selected_month = st.selectbox("Select a Month:", month_names, key="month_selection_location_200hr")
 
-            # Kondisi ketika Year atau Month dipilih "All"
+            # Menentukan bulan saat ini atau bulan yang dipilih untuk ditampilkan
             if selected_year == "All" or selected_month == "All":
-                # Get the current month and filter data
+                # Get the current month if "All" is selected
                 current_month = datetime.now().strftime('%B')
-                current_month_occupancy = bali_occupancy_data[bali_occupancy_data['Month'] == current_month]
-                site_availability_summary = current_month_occupancy.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
-
-                aggregated_data = site_availability_summary.groupby('Site').agg({
-                    'Available': 'sum',
-                    'Batch start date': lambda x: ', '.join([f"{a} ({b})" for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])])
-                }).reset_index()
-
-                # Rename columns for clarity
-                aggregated_data.columns = ['Site', 'Total Available', 'Batch Details']
-
-                st.markdown(f"""
-                    <h3 style='text-align: center;'>Availability for Sites in {current_month}</h3>
-                """, unsafe_allow_html=True)
-
-                # Define the number of columns per row to control the layout
-                num_columns = 4
-                rows = [st.columns(num_columns) for _ in range((len(aggregated_data) + num_columns - 1) // num_columns)]
-
-                # Display data in a grid format
-                for index, row in enumerate(aggregated_data.iterrows()):
-                    site_name = row[1]['Site']
-                    total_available = row[1]['Total Available']
-                    batch_details = row[1]['Batch Details']
-                    
-                    row_index = index // num_columns
-                    col_index = index % num_columns
-
-                    with rows[row_index][col_index]:
-                        st.markdown(f"""
-                            <div style='text-align: center; width: 200px; padding: 20px; margin: 10px;'>
-                                <div style='font-size: 16px; color: #333333;'>{site_name}</div>
-                                <br>
-                                <div style='font-size: 48px; color: #202fb2;'>{total_available}</div>
-                                <div style='color: #202fb2; font-size: 18px;'>Total Available Rooms</div>
-                                <br>
-                                <div style='font-size: 16px; color: #333333;'>Batch:</div>
-                                <div style='font-size: 14px; color: #666666;'>{batch_details}</div>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                st.markdown("<br>", unsafe_allow_html=True)
-
-            # Kondisi ketika Month dipilih spesifik, bukan "All"
+                filtered_data = bali_occupancy_data[bali_occupancy_data['Month'] == current_month]
             else:
-                # Konversi bulan yang dipilih ke nomor bulan
+                # Filter berdasarkan bulan yang dipilih
                 month_num = datetime.strptime(selected_month, '%B').month
                 filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
+                current_month = selected_month
 
-                # Tampilkan data yang telah difilter untuk 200HR berdasarkan bulan
-                st.write("Filtered Batch Data for 200HR Program:")
-                st.dataframe(filtered_data) if not filtered_data.empty else st.write("No data available for the selected filters.")
+            # Menghitung ketersediaan per site dan per tanggal batch
+            site_availability_summary = filtered_data.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
+            
+            aggregated_data = site_availability_summary.groupby('Site').agg({
+                'Available': 'sum',
+                'Batch start date': lambda x: ', '.join([f"{a} ({b})" for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])])
+            }).reset_index()
+
+            # Rename columns for clarity
+            aggregated_data.columns = ['Site', 'Total Available', 'Batch Details']
+
+            st.markdown(f"""
+                <h3 style='text-align: center;'>Availability for Sites in {current_month}</h3>
+            """, unsafe_allow_html=True)
+
+            # Define the number of columns per row to control the layout
+            num_columns = 4
+            rows = [st.columns(num_columns) for _ in range((len(aggregated_data) + num_columns - 1) // num_columns)]
+
+            # Display data in a grid format
+            for index, row in enumerate(aggregated_data.iterrows()):
+                site_name = row[1]['Site']
+                total_available = row[1]['Total Available']
+                batch_details = row[1]['Batch Details']
+                
+                row_index = index // num_columns
+                col_index = index % num_columns
+
+                with rows[row_index][col_index]:
+                    st.markdown(f"""
+                        <div style='text-align: center; width: 200px; padding: 20px; margin: 10px;'>
+                            <div style='font-size: 16px; color: #333333;'>{site_name}</div>
+                            <br>
+                            <div style='font-size: 48px; color: #202fb2;'>{total_available}</div>
+                            <div style='color: #202fb2; font-size: 18px;'>Total Available Rooms</div>
+                            <br>
+                            <div style='font-size: 16px; color: #333333;'>Batch:</div>
+                            <div style='font-size: 14px; color: #666666;'>{batch_details}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
 
         elif program == "300HR":
             # Filter data untuk kategori 300HR
