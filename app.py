@@ -451,56 +451,60 @@ if location == "Bali":
                 filtered_data = year_data[year_data['Batch start date'].dt.month == month_num]
                 current_month = selected_month
 
-            # Menghitung ketersediaan per site dan per tanggal batch
-            site_availability_summary = filtered_data.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
-            
-            # Pastikan kolom 'Batch start date' dalam format datetime
-            if site_availability_summary['Batch start date'].dtype == 'O':  # 'O' stands for object type
-                site_availability_summary['Batch start date'] = pd.to_datetime(site_availability_summary['Batch start date'], errors='coerce')
-
-            # Agregasi data dengan memastikan format tanggal sesuai
-            aggregated_data = site_availability_summary.groupby('Site').agg({
-                'Available': 'sum',
-                'Batch start date': lambda x: ', '.join([
-                    f"{a.strftime('%d %b %Y')} ({b})" if pd.notnull(a) else "Unknown Date"
-                    for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])
-                ])
-            }).reset_index()
-
-            # Rename columns for clarity
-            aggregated_data.columns = ['Site', 'Total Available', 'Batch Details']
-
-            st.markdown(f"""
-                <h3 style='text-align: center;'>Availability for Sites in {current_month}</h3>
-            """, unsafe_allow_html=True)
-
-            # Define the number of columns per row to control the layout
-            num_columns = 4
-            rows = [st.columns(num_columns) for _ in range((len(aggregated_data) + num_columns - 1) // num_columns)]
-
-            # Display data in a grid format
-            for index, row in enumerate(aggregated_data.iterrows()):
-                site_name = row[1]['Site']
-                total_available = row[1]['Total Available']
-                batch_details = row[1]['Batch Details']
+            # Cek apakah filtered_data kosong
+            if filtered_data.empty:
+                st.write("No data available for the selected filters.")
+            else:
+                # Menghitung ketersediaan per site dan per tanggal batch
+                site_availability_summary = filtered_data.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
                 
-                row_index = index // num_columns
-                col_index = index % num_columns
+                # Pastikan kolom 'Batch start date' dalam format datetime
+                if site_availability_summary['Batch start date'].dtype == 'O':  # 'O' stands for object type
+                    site_availability_summary['Batch start date'] = pd.to_datetime(site_availability_summary['Batch start date'], errors='coerce')
 
-                with rows[row_index][col_index]:
-                    st.markdown(f"""
-                        <div style='text-align: center; width: 200px; padding: 20px; margin: 10px;'>
-                            <div style='font-size: 16px; color: #333333;'>{site_name}</div>
-                            <br>
-                            <div style='font-size: 48px; color: #202fb2;'>{total_available}</div>
-                            <div style='color: #202fb2; font-size: 18px;'>Total Available Rooms</div>
-                            <br>
-                            <div style='font-size: 16px; color: #333333;'>Batch:</div>
-                            <div style='font-size: 14px; color: #666666;'>{batch_details}</div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                # Agregasi data dengan memastikan format tanggal sesuai
+                aggregated_data = site_availability_summary.groupby('Site').agg({
+                    'Available': 'sum',
+                    'Batch start date': lambda x: ', '.join([
+                        f"{a.strftime('%d %b %Y')} ({b})" if pd.notnull(a) else "Unknown Date"
+                        for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])
+                    ])
+                }).reset_index()
 
-            st.markdown("<br>", unsafe_allow_html=True)
+                # Rename columns for clarity
+                aggregated_data.columns = ['Site', 'Total Available', 'Batch Details']
+
+                st.markdown(f"""
+                    <h3 style='text-align: center;'>Availability for Sites in {current_month}</h3>
+                """, unsafe_allow_html=True)
+
+                # Define the number of columns per row to control the layout
+                num_columns = 4
+                rows = [st.columns(num_columns) for _ in range((len(aggregated_data) + num_columns - 1) // num_columns)]
+
+                # Display data in a grid format
+                for index, row in enumerate(aggregated_data.iterrows()):
+                    site_name = row[1]['Site']
+                    total_available = row[1]['Total Available']
+                    batch_details = row[1]['Batch Details']
+                    
+                    row_index = index // num_columns
+                    col_index = index % num_columns
+
+                    with rows[row_index][col_index]:
+                        st.markdown(f"""
+                            <div style='text-align: center; width: 200px; padding: 20px; margin: 10px;'>
+                                <div style='font-size: 16px; color: #333333;'>{site_name}</div>
+                                <br>
+                                <div style='font-size: 48px; color: #202fb2;'>{total_available}</div>
+                                <div style='color: #202fb2; font-size: 18px;'>Total Available Rooms</div>
+                                <br>
+                                <div style='font-size: 16px; color: #333333;'>Batch:</div>
+                                <div style='font-size: 14px; color: #666666;'>{batch_details}</div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                st.markdown("<br>", unsafe_allow_html=True)
 
         # Menambahkan pilihan untuk analisis
         location_analysis_option = st.radio(
