@@ -373,10 +373,12 @@ if location == "Bali":
 
             # Menghitung ketersediaan per site dan per tanggal batch
             site_availability_summary = filtered_data.groupby(['Site', 'Batch start date'])['Available'].sum().reset_index()
-            
+
             aggregated_data = site_availability_summary.groupby('Site').agg({
                 'Available': 'sum',
-                'Batch start date': lambda x: ', '.join([f"{a} ({b})" for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])])
+                'Batch start date': lambda x: ', '.join([
+                    f"{a.strftime('%d %b %Y')} ({b})" for a, b in zip(x, site_availability_summary.loc[x.index, 'Available'])
+                ])
             }).reset_index()
 
             # Rename columns for clarity
