@@ -797,16 +797,57 @@ if location == "Bali":
 
 
     elif bali_option == "Batch":
-        # Batch details based on program selection
-        st.write(f"Batch details for {program} program")
-        if program == "200HR":
-            data_200hr_batches = bali_sales_data[bali_sales_data['Category'] == '200HR']
-            st.write("Batch Data for 200HR Program")
-            st.write(data_200hr_batches)
-        elif program == "300HR":
-            data_300hr_batches = bali_sales_data[bali_sales_data['Category'] == '300HR']
-            st.write("Batch Data for 300HR Program")
-            st.write(data_300hr_batches)
+        # Pilihan Site
+        site_option = st.radio("Select Site", bali_sales_data['Site'].unique())
+
+        # Filter data hanya untuk site yang dipilih
+        selected_site_data = bali_sales_data[bali_sales_data['Site'] == site_option]
+
+        # Pastikan semua entri di kolom 'PAID STATUS' menggunakan huruf kapital
+        selected_site_data['PAID STATUS'] = selected_site_data['PAID STATUS'].str.upper()
+
+        # Convert 'Year' ke tipe integer untuk pemrosesan, lalu kembali ke string untuk tampilan
+        selected_site_data['Year'] = selected_site_data['Year'].astype(int).astype(str)
+
+        # Convert 'Month' ke datetime, urutkan, lalu ubah kembali ke nama bulan
+        selected_site_data['Month'] = pd.to_datetime(selected_site_data['Month'], format='%B')
+        selected_site_data = selected_site_data.sort_values(by='Month')
+        selected_site_data['Month'] = selected_site_data['Month'].dt.strftime('%B')
+
+        # Format 'Batch start date' dan 'Batch end date' untuk tampilan konsisten
+        selected_site_data['Batch start date'] = pd.to_datetime(selected_site_data['Batch start date']).dt.strftime('%d %b %Y')
+        selected_site_data['Batch end date'] = pd.to_datetime(selected_site_data['Batch end date']).dt.strftime('%d %b %Y')
+
+        # Mengisi nilai kosong di kolom 'Group' dengan label 'No Group'
+        selected_site_data['Group'] = selected_site_data['Group'].fillna('No Group')
+
+        # Menambahkan pilihan untuk program 200HR atau 300HR
+        program_option = st.selectbox("Select Program", ["200HR", "300HR"])
+
+        # Filter data berdasarkan program yang dipilih
+        program_data = selected_site_data[selected_site_data['Category'] == program_option]
+
+        if program_data.empty:
+            st.write("No data available for the selected site and program.")
+        else:
+            # Group data berdasarkan Year, Month, Batch start date, Batch end date, dan Group
+            grouped_data = program_data.groupby(
+                ['Year', 'Month', 'Batch start date', 'Batch end date', 'Group']
+            ).agg(
+                FULLY_PAID=('PAID STATUS', lambda x: (x == 'FULLY PAID').sum()),
+                DEPOSIT=('PAID STATUS', lambda x: (x == 'DEPOSIT').sum()),
+                NOT_PAID=('PAID STATUS', lambda x: (x.isna()).sum())
+            ).reset_index()
+
+            # Menambahkan kolom 'Total' sebagai jumlah dari fully_paid, deposit, dan not_paid
+            grouped_data['Total'] = grouped_data['FULLY_PAID'] + grouped_data['DEPOSIT'] + grouped_data['NOT_PAID']
+
+            # Pastikan kolom `Year` tetap dalam tipe string agar tidak menampilkan koma
+            grouped_data['Year'] = grouped_data['Year'].astype(str)
+
+            # Tampilkan hasil dalam bentuk tabel di Streamlit
+            st.markdown(f"### Data for Site: {site_option} ({program_option} Program)")
+            st.dataframe(grouped_data)
 
 elif location == "India":
     program = st.selectbox("Choose a Program:", ["200HR", "300HR"], key="program_india")
