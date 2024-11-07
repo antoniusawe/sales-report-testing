@@ -797,6 +797,9 @@ if location == "Bali":
 
 
     elif bali_option == "Batch":
+        # Pilihan Site
+        site_option = st.radio("Select Site", bali_sales_data['Site'].unique())
+
         # Filter data hanya untuk site yang dipilih
         selected_site_data = bali_sales_data[bali_sales_data['Site'] == site_option]
 
